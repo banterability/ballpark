@@ -3,21 +3,54 @@
 <head>
   <meta charset="utf-8">
   <title>Ballpark</title>
+
+  <style>
+    #vote-options li{
+      cursor: pointer;
+      text-color: blue;
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <h1>Ballpark</h1>
 
+  <h2>Options</h2>
+  <ul id="vote-options"></ul>
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
     var socket = io.connect('http://localhost');
+
     socket.on('connected', function(data){
-      socket.emit('vote', {vote: randomVote()});
+      renderOptions(data.options);
     });
 
-    var randomVote = function(){
-      VOTE_OPTIONS = [0,1,2,3,5,8,'?'];
-      return VOTE_OPTIONS[Math.floor(Math.random() * VOTE_OPTIONS.length)];
+    var renderOptions = function(options){
+      var listEl = document.querySelector('#vote-options');
+      var optionEls = document.createDocumentFragment();
+      options.forEach(function(option){
+        var el = document.createElement('li');
+        el.textContent = option;
+        optionEls.appendChild(el);
+      });
+      listEl.appendChild(optionEls);
+      addListeners();
+    };
+
+    var addListeners = function(){
+      var els = document.querySelectorAll('#vote-options li');
+      [].forEach.call(els, function(el){
+        el.addEventListener('click', function(ev){
+          var optionValue = ev.currentTarget.textContent;
+          vote(optionValue);
+        }, false);
+      });
     }
+
+    var vote = function(option){
+      socket.emit('vote', {vote: option});
+    };
   </script>
 </body>
 </html>
