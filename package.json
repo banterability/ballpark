@@ -1,0 +1,30 @@
+{
+  "name": "ballpark",
+  "version": "0.1.0",
+  "description": "Group estimates",
+  "main": "index.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/banterability/ballpark.git"
+  },
+  "author": "Jeff Long",
+  "license": "MIT",
+  "dependencies": {
+    "express": "~3.4.0",
+    "coffee-script": "~1.6.3",
+    "underscore": "~1.5.2",
+    "socket.io": "~0.9.16",
+    "node-uuid": "~1.4.1"
+  },
+  "readmeFilename": "README.md",
+  "gitHead": "69e9196d8c875ef088222d9e0e91126108374084",
+  "devDependencies": {
+    "coffee-script": "~1.6.3"
+  },
+  "bugs": {
+    "url": "https://github.com/banterability/ballpark/issues"
+  }
+}
