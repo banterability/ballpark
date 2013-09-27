@@ -14,6 +14,7 @@
 </head>
 <body>
   <h1>Ballpark</h1>
+  <h4><span id="user-count">1</span> connected</h4>
 
   <h2>Options</h2>
   <ul id="vote-options"></ul>
@@ -24,6 +25,12 @@
 
     socket.on('connected', function(data){
       renderOptions(data.options);
+      updateUserCount(data.userCount);
+    });
+
+    socket.on('userChange', function(data){
+      console.log("user count change message", data);
+      updateUserCount(data.userCount);
     });
 
     var renderOptions = function(options){
@@ -50,6 +57,10 @@
 
     var vote = function(option){
       socket.emit('vote', {vote: option});
+    };
+
+    var updateUserCount = function(count){
+      document.getElementById('user-count').textContent = count;
     };
   </script>
 </body>

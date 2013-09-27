@@ -13,6 +13,24 @@ app.get '/', (req, res) ->
 io.sockets.on 'connection', (socket) ->
   socket.emit 'connected',
     options: VOTE_OPTIONS
+    userCount: io.sockets.clients().length
+
+  broadcastUserCount socket, 'connect'
 
   socket.on 'vote', (data) ->
-    console.log "User #{socket.id} voted:", data.vote
+    console.log "TK: User #{socket.id} voted:", data.vote
+
+  socket.on 'disconnect', ->
+    broadcastUserCount socket, 'disconnect'
+
+
+## Helpers ##
+
+broadcastUserCount = (socket, eventType) ->
+  userCount = io.sockets.clients().length
+  userCount -= 1 if eventType is "disconnect"
+
+  socket.broadcast.emit 'userChange',
+    userId: socket.id
+    userCount: userCount
+    eventType: eventType
