@@ -18,7 +18,9 @@ io.sockets.on 'connection', (socket) ->
   broadcastUserCount socket, 'connect'
 
   socket.on 'vote', (data) ->
-    console.log "TK: User #{socket.id} voted:", data.vote
+    socket.broadcast.emit 'newVote',
+      option: data.vote
+      userId: socket.id
 
   socket.on 'disconnect', ->
     broadcastUserCount socket, 'disconnect'

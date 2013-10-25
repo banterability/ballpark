@@ -5,10 +5,78 @@
   <title>Ballpark</title>
 
   <style>
+    @-webkit-keyframes ping {
+      0% {
+        color: rgba(255,0,0,0);
+        top: -20px;
+      }
+      10% {
+        color: rgba(255,0,0,1);
+        top: -25px;
+      }
+      100% {
+        color: rgba(255,0,0,0);
+        top: -55px;
+      }
+    }
+
     #vote-options li{
       cursor: pointer;
-      text-color: blue;
-      text-decoration: underline;
+      display: inline-block;
+      padding: 25px 0;
+      font-size: 22px;
+      line-height: 30px;
+      margin: 0 10px;
+      width: 80px;
+      text-align: center;
+      -webkit-transition: background-color 300ms ease-in-out;
+      position: relative;
+    }
+    #vote-options li:nth-child(1){
+      background-color: #f2ddfc;
+    }
+    #vote-options li:nth-child(2){
+      background-color: #d99ef7;
+    }
+    #vote-options li:nth-child(3){
+      background-color: #c15ff2;
+    }
+    #vote-options li:nth-child(4){
+      background-color: #a820ed;
+    }
+    #vote-options li:nth-child(5){
+      background-color: #810fbb;
+    }
+    #vote-options li:nth-child(6){
+      background-color: #610b8c;
+    }
+    #vote-options li:nth-child(7){
+      background-color: #35064d;
+    }
+    #vote-options li span{
+      background-color: rgba(0,0,0,0.6);
+      color: rgba(255,255,255,0.9);
+      width: 30px;
+      height: 30px;
+      display: inline-block;
+      border-radius: 50%;
+      font-family: "Whitney HTF";
+      -webkit-transition: background-color 300ms ease-in-out;
+      /*position: absolute;*/
+    }
+    #vote-options li.active::before{
+      position: absolute;
+      top: -30px;
+      color: #f00;
+      content: "+1";
+      -webkit-animation: ping 1500ms;
+      -webkit-animation-fill-mode: forwards;
+    }
+    #vote-options li:hover{
+      background-color: rgba(0,0,0,0.9);
+    }
+    #vote-options li:hover span{
+      background-color: rgba(0,0,0,0);
     }
   </style>
 </head>
@@ -33,12 +101,20 @@
       updateUserCount(data.userCount);
     });
 
+    socket.on('newVote', function(data){
+      console.log('new vote', data);
+      updateVotes(data.option);
+    });
+
     var renderOptions = function(options){
       var listEl = document.querySelector('#vote-options');
       var optionEls = document.createDocumentFragment();
       options.forEach(function(option){
         var el = document.createElement('li');
-        el.textContent = option;
+        el.dataset.option = option;
+        var label = document.createElement('span');
+        label.textContent = option;
+        el.appendChild(label);
         optionEls.appendChild(el);
       });
       listEl.appendChild(optionEls);
@@ -52,12 +128,23 @@
           var optionValue = ev.currentTarget.textContent;
           vote(optionValue);
         }, false);
+        el.addEventListener('webkitAnimationEnd', function(ev){
+          console.log('animation end', ev);
+          ev.target.classList.remove('active');
+        });
       });
     }
 
     var vote = function(option){
       socket.emit('vote', {vote: option});
     };
+
+    var updateVotes = function(vote){
+      console.log("#vote-options [data-option=" + vote + "]");
+      var voteContainer = document.querySelector("#vote-options [data-option='" + vote + "']");
+      console.log('container', voteContainer);
+      voteContainer.classList.add('active');
+    }
 
     var updateUserCount = function(count){
       document.getElementById('user-count').textContent = count;
