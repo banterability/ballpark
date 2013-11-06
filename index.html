@@ -83,6 +83,7 @@
 <body>
   <h1>Ballpark</h1>
   <h4><span id="user-count">1</span> connected</h4>
+  <h4>Current election: <span id="election-id">none</span> <a id="reset-election" href="javascript:void(0)">reset</a></h4>
 
   <h2>Options</h2>
   <ul id="vote-options"></ul>
@@ -90,8 +91,11 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     var socket = io.connect('http://localhost');
+    var election = null;
 
     socket.on('connected', function(data){
+      election = data.election;
+      updateElection(data.election);
       renderOptions(data.options);
       updateUserCount(data.userCount);
     });
@@ -103,8 +107,19 @@
 
     socket.on('newVote', function(data){
       console.log('new vote', data);
-      updateVotes(data.option);
+      animateVotes(data.option);
     });
+
+    socket.on('newElection', function(data){
+      console.log('new election', data);
+      updateElection(data.electionId);
+      election = data.electionId;
+    });
+
+    document.getElementById('reset-election').addEventListener('click', function(){
+      socket.emit('resetVote', {});
+      updateElection('resetting...');
+    }, false);
 
     var renderOptions = function(options){
       var listEl = document.querySelector('#vote-options');
@@ -129,22 +144,29 @@
           vote(optionValue);
         }, false);
         el.addEventListener('webkitAnimationEnd', function(ev){
-          console.log('animation end', ev);
+          // console.log('animation end', ev);
           ev.target.classList.remove('active');
         });
       });
     }
 
     var vote = function(option){
-      socket.emit('vote', {vote: option});
+      if(!election){
+        throw new Error("Election not defined");
+      }
+      socket.emit('vote', {vote: option, election: election});
     };
 
-    var updateVotes = function(vote){
-      console.log("#vote-options [data-option=" + vote + "]");
+    var animateVotes = function(vote){
+      // console.log("#vote-options [data-option=" + vote + "]");
       var voteContainer = document.querySelector("#vote-options [data-option='" + vote + "']");
-      console.log('container', voteContainer);
+      // console.log('container', voteContainer);
       voteContainer.classList.add('active');
     }
+
+    var updateElection = function(election){
+      document.querySelector('#election-id').textContent = election;
+    };
 
     var updateUserCount = function(count){
       document.getElementById('user-count').textContent = count;
