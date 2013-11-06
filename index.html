@@ -107,7 +107,10 @@
 
     socket.on('newVote', function(data){
       console.log('new vote', data);
-      animateVotes(data.option);
+      console.log('election summary', data.summary);
+      if(data.userId !== socket.socket.sessionid){
+        animateVotes(data.option);
+      }
     });
 
     socket.on('newElection', function(data){
