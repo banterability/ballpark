@@ -15,46 +15,49 @@ app.get '/', (req, res) ->
   res.sendfile "#{__dirname}/index.html"
 
 io.sockets.on 'connection', (socket) ->
+
+  ws = new Websocket socket, io
+
   if ELECTIONS.length > 0
     election = last ELECTIONS
   else
     election = createElection()
 
-  socket.emit 'connected',
+  ws.reply 'connected',
     options: VOTE_OPTIONS
-    userCount: io.sockets.clients().length
+    userCount: ws.clientCount()
     election: election.id
 
-  broadcastUserCount socket, 'connect'
+  broadcastUserCount ws, 'connect'
 
-  socket.on 'vote', (data) ->
+  ws.socket.on 'vote', (data) ->
     election = ELECTIONS[ELECTION_ID]
     election.vote data.vote
-    io.sockets.emit 'newVote',
+    ws.broadcast 'newVote',
       option: data.vote
-      userId: socket.id
+      userId: ws.socketId()
       summary: election.summary()
 
-  socket.on 'disconnect', ->
-    broadcastUserCount socket, 'disconnect'
+  ws.socket.on 'disconnect', ->
+    broadcastUserCount ws, 'disconnect'
 
-  socket.on 'resetVote', ->
+  ws.socket.on 'resetVote', ->
     ELECTION_ID += 1
     newElection = new Election(ELECTION_ID)
     ELECTIONS[ELECTION_ID] = newElection
 
-    io.sockets.emit 'newElection',
+    ws.broadcast 'newElection',
       electionId: ELECTION_ID
 
 
 ## Helpers ##
 
-broadcastUserCount = (socket, eventType) ->
-  userCount = io.sockets.clients().length
+broadcastUserCount = (ws, eventType) ->
+  userCount = ws.clientCount()
   userCount -= 1 if eventType is "disconnect"
 
-  socket.broadcast.emit 'userChange',
-    userId: socket.id
+  ws.notify 'userChange',
+    userId: ws.socketId()
     userCount: userCount
     eventType: eventType
 
@@ -83,3 +86,25 @@ class Election
       count: count
       avg: sum / count
     }
+
+class Websocket
+  constructor: (@socket, @io) ->
+
+  socketId: ->
+    @socket.id
+
+  # count of attached clients
+  clientCount: ->
+    @io.sockets.clients().length
+
+  # send message back to sender
+  reply: (msg, data) ->
+    @socket.emit msg, data
+
+  # send message to everyone *but* sender
+  notify: (msg, data) ->
+    @socket.broadcast.emit msg, data
+
+  # send message to all
+  broadcast: (msg, data) ->
+    @io.sockets.emit msg, data
