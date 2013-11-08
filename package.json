@@ -16,7 +16,8 @@
     "express": "~3.4.0",
     "coffee-script": "~1.6.3",
     "underscore": "~1.5.2",
-    "socket.io": "~0.9.16"
+    "socket.io": "~0.9.16",
+    "node-uuid": "~1.4.1"
   },
   "readmeFilename": "README.md",
   "gitHead": "69e9196d8c875ef088222d9e0e91126108374084",
