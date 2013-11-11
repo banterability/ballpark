@@ -3,10 +3,13 @@ server = require('http').createServer(app)
 io = require('socket.io').listen(server)
 {reduce, last} = require 'underscore'
 uuid = require 'node-uuid'
+redis = require 'redis'
+client = redis.createClient()
+Race = require './lib/race'
 
 
 VOTE_OPTIONS = [0,1,2,3,5,8]
-ELECTIONS = []
+CURRENT_ELECTION = null
 
 server.listen 5678, ->
   console.log "up on http://localhost:5678"
@@ -18,26 +21,24 @@ io.sockets.on 'connection', (socket) ->
 
   ws = new Websocket socket, io
 
-  if ELECTIONS.length > 0
-    election = last ELECTIONS
-  else
-    election = createElection()
+  CURRENT_ELECTION = createElection() unless CURRENT_ELECTION
 
   ws.reply 'connected',
     options: VOTE_OPTIONS
     userCount: ws.clientCount()
-    election: election.id
+    election: CURRENT_ELECTION.id
 
   broadcastUserCount ws, 'connect'
 
   ws.socket.on 'vote', (data) ->
-    election = getElection data.election
+    election = CURRENT_ELECTION
     election.vote data.vote
 
-    ws.broadcast 'newVote',
-      option: data.vote
-      userId: ws.socketId()
-      summary: election.summary()
+    election.summary (err, summary) ->
+      ws.broadcast 'newVote',
+        option: data.vote
+        userId: ws.socketId()
+        summary: summary
 
   ws.socket.on 'disconnect', ->
     broadcastUserCount ws, 'disconnect'
@@ -61,33 +62,7 @@ broadcastUserCount = (ws, eventType) ->
     eventType: eventType
 
 createElection = ->
-  election = new Election()
-  ELECTIONS[election.id] = election
-  election
-
-getElection = (id) ->
-  ELECTIONS[id]
-
-class Election
-  constructor: () ->
-    @id = uuid.v1()
-    @votes = []
-
-  vote: (value) ->
-    @votes.push parseInt(value, 0)
-
-  summary: ->
-    sum = reduce @votes, (memo, num) ->
-      memo + num
-    , 0
-    count = @votes.length
-
-    return {
-      electionId: @id
-      sum: sum
-      count: count
-      avg: sum / count
-    }
+  CURRENT_ELECTION = new Race client
 
 class Websocket
   constructor: (@socket, @io) ->
