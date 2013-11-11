@@ -1,5 +1,6 @@
 {reduce} = require 'underscore'
 uuid = require 'node-uuid'
+async = require 'async'
 
 
 class Race
@@ -10,27 +11,31 @@ class Race
   vote: (value) ->
     @store.rpush @key, value
 
-  summary: ->
-    total = @_total()
-    count = @_count()
+  summary: (cb) ->
+    async.parallel {
+      total: @_total
+      count: @_count
+    }, (err, results) =>
+      cb err, {
+        id: @id
+        total: results.total
+        count: results.count
+        avg: results.total / results.count
+      }
 
-    return {
-      id: @id
-      total: total
-      count: count
-      avg: total/count
-    }
+  _results: (cb) ->
+    results = @store.lrange @key, 0, -1, (err, res) ->
+      cb err, res
 
-  _results: ->
-    @store.lrange @key, 0, -1
+  _total: (cb) =>
+    @_results (err, res) ->
+      cb null, reduce res, (memo, num) ->
+        memo + parseInt num, 10
+      , 0
 
-  _total: ->
-    reduce @_results(), (memo, num) ->
-      memo + num
-    , 0
-
-  _count: ->
-    @store.llen @key
+  _count: (cb) =>
+    @store.llen @key, (err, res) ->
+      cb err, res
 
 
 module.exports = Race

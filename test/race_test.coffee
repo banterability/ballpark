@@ -28,11 +28,10 @@ describe "Race", ->
 
     it 'returns a sum of all votes', ->
       expectedKey = "races:#{@race.id}:votes"
-      actual = @race.summary()
-
-      assert @store.lrange.calledWith expectedKey, 0, -1
-      assert @store.llen.calledWith expectedKey
-      assert.equal actual.id, @race.id
-      assert.equal actual.total, 10
-      assert.equal actual.avg, 2.5
-      assert.equal actual.count, 4
+      @race.summary (err, actual) ->
+        assert @store.lrange.calledWith expectedKey, 0, -1
+        assert @store.llen.calledWith expectedKey
+        assert.equal actual.id, @race.id
+        assert.equal actual.total, 10
+        assert.equal actual.avg, 2.5
+        assert.equal actual.count, 4
