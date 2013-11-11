@@ -10,26 +10,27 @@ class Race
   vote: (value) ->
     @store.rpush @key, value
 
-  total: ->
-    reduce @_results(), (memo, num) ->
-      memo + num
-    , 0
+  summary: ->
+    total = @_total()
+    count = @_count()
+
+    return {
+      id: @id
+      total: total
+      count: count
+      avg: total/count
+    }
 
   _results: ->
     @store.lrange @key, 0, -1
 
-  # summary: ->
-  #   sum = reduce @votes, (memo, num) ->
-  #     memo + num
-  #   , 0
-  #   count = @votes.length
+  _total: ->
+    reduce @_results(), (memo, num) ->
+      memo + num
+    , 0
 
-  #   return {
-  #     electionId: @id
-  #     sum: sum
-  #     count: count
-  #     avg: sum / count
-  #   }
+  _count: ->
+    @store.llen @key
 
 
 module.exports = Race
