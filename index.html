@@ -84,6 +84,7 @@
   <h1>Ballpark</h1>
   <h4><span id="user-count">1</span> connected</h4>
   <h4>Current election: <span id="election-id">none</span> <a id="reset-election" href="javascript:void(0)">reset</a></h4>
+  <h4>Results: <span id="results">none</span></h4>
 
   <h2>Options</h2>
   <ul id="vote-options"></ul>
@@ -111,6 +112,7 @@
       if(data.userId !== socket.socket.sessionid){
         animateVotes(data.option);
       }
+      updateResults(data.summary.avg);
     });
 
     socket.on('newElection', function(data){
@@ -169,10 +171,15 @@
 
     var updateElection = function(election){
       document.querySelector('#election-id').textContent = election;
+      updateResults('none');
     };
 
     var updateUserCount = function(count){
       document.getElementById('user-count').textContent = count;
+    };
+
+    var updateResults = function(average){
+      document.getElementById('results').textContent = average;
     };
   </script>
 </body>
